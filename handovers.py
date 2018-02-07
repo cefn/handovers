@@ -96,9 +96,10 @@ def holidaynights(holidaymap):
             prefix += "Mum "
         else:
             prefix += "Dad "
-        prefix += "has first period "
+        prefix += "has first period starting " + prettify(start) + " "
+        suffix = ". Holiday ends " + prettify(end)
         if not("Summer" in name and "Holiday" in name):
-            yield prefix + formatcandidates(generatecandidates(start, end))
+            yield prefix + formatcandidates(generatecandidates(start, end)) + suffix
         else:
             nextnoon = noon(start)
             sequence = []
@@ -106,7 +107,7 @@ def holidaynights(holidaymap):
                 nextnoon += datetime.timedelta(offset)
                 sequence.append(prettify(nextnoon.date()))
             sequence = ", ".join(sequence)
-            yield prefix + "with handovers " + sequence + " then half of remaining {} nights with Dad ".format(countnights(nextnoon, end)) + formatcandidates(generatecandidates(nextnoon, end), prefix="until final handover")
+            yield prefix + "with handovers " + sequence + " then half of remaining {} nights with Dad ".format(countnights(nextnoon, end)) + formatcandidates(generatecandidates(nextnoon, end), prefix="until final handover ") + suffix
 
 
 if __name__ == "__main__":
