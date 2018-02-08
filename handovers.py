@@ -86,36 +86,62 @@ def formatcandidates(candidates):
     else:
         return prettify(candidates[0].date())
 
+def parentSequence(holidayName, start, end):
+        if  (   ("Autumn" in holidayName and "Holiday" in holidayName and start.year % 2 != 0) or 
+                ("Summer" in holidayName and "Holiday" in holidayName)  ):
+            return "Mum", "Dad"
+        else:
+            return "Dad", "Mum"
+
+def dateSequence(holidayName, start, end):
+    sequenceDates = []
+    sequenceDates.append(start)
+    
+    if not("Summer" in holidayName and "Holiday" in holidayName): # handover splitting whole holiday
+        sequenceDates.append(generatecandidates(start, end)[0]) 
+    else: # handover splitting into week each, fortnight each, split remainder
+#            for offset in (14,14,7,7):
+        nextnoon = noon(start)
+        for offset in (7,7,14,14): # week and fortnight handovers
+            nextnoon += datetime.timedelta(offset)
+            sequenceDates.append(nextnoon.date())
+        sequenceDates.append(generatecandidates(nextnoon, end)[0]) #handover splitting remaining time
+    
+    sequenceDates.append(end)
+    
+    return sequenceDates
+    
+def createIcal():
+    pass
+
 
 def holidaynights(holidaymap):
     for holidayName, start, end in holidaybounds(holidaymap):
         start = parser.parse(start)
         end = parser.parse(end)
-        totalNights = countnights(start, end)
-        startString = prettify(start)
-        endString = prettify(end)
-        mumFirst = (
-            ("Autumn" in holidayName and "Holiday" in holidayName and start.year % 2 != 0) or 
-            ("Summer" in holidayName and "Holiday" in holidayName)
-        )
-        firstParent = "Mum" if mumFirst else "Dad"
-        secondParent = "Dad" if mumFirst else "Mum"
+        
+        sequenceDates = dateSequence(holidayName, start, end)
+
+        # figure out pattern
         pattern = "{holidayName}: ({totalNights} nights) {firstParent} has first period starting {startString} "
-        if "Summer" in holidayName and "Holiday" in holidayName:
-            nextnoon = noon(start)
-            sequenceDates = []
-#            for offset in (14,14,7,7):
-            for offset in (7,7,14,14):
-                nextnoon += datetime.timedelta(offset)
-                sequenceDates.append(nextnoon.date())
-            sequenceSummary = ", ".join([prettify(date) for date in sequenceDates])
-            surplusNights = countnights(nextnoon, end)
-            finalHandover = formatcandidates(generatecandidates(nextnoon, end))
-            pattern += "with handovers {sequenceSummary} then half of remaining {surplusNights} nights with {secondParent} until handover {finalHandover}. "
+        
+        if len(sequenceDates) == 3: # Normal holiday
+            handoverSummary = formatcandidates([sequenceDates[1]])
+            pattern += "with handover {handoverSummary}. "        
         else:
-            sequenceSummary = formatcandidates(generatecandidates(start, end))
-            pattern += "with handover {sequenceSummary}. "        
+            handoverSummary = ", ".join([prettify(date) for date in sequenceDates[1:-2]])
+            surplusNights = countnights(sequenceDates[-3], sequenceDates[-1])
+            finalHandover = formatcandidates([sequenceDates[-2]])
+            pattern += "with handovers {handoverSummary} then half of remaining {surplusNights} nights with {secondParent} until handover {finalHandover}. "
+
         pattern += "Holiday ends {endString}"
+        
+        # populate local calculated values
+        totalNights = countnights(start, end)
+        startString, endString = prettify(start), prettify(end)
+        firstParent, secondParent = parentSequence(holidayName, start, end)
+        
+        # use local values to populate pattern
         yield pattern.format(**locals())
 
 
