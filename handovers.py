@@ -98,10 +98,10 @@ def dateSequence(holidayName, start, end):
     sequenceDates.append(start)
     
     if not("Summer" in holidayName and "Holiday" in holidayName): # handover splitting whole holiday
-        sequenceDates.append(generatecandidates(start, end)[0]) 
+        sequenceDates.append(generatecandidates(start, end)[0])
     else: # handover splitting into week each, fortnight each, split remainder
-#            for offset in (14,14,7,7):
         nextnoon = noon(start)
+        # for offset in (14,14,7,7):
         for offset in (7,7,14,14): # week and fortnight handovers
             nextnoon += datetime.timedelta(offset)
             sequenceDates.append(nextnoon.date())
@@ -111,9 +111,37 @@ def dateSequence(holidayName, start, end):
     
     return sequenceDates
     
-def createIcal():
-    pass
+def writeical(holidaymap):
+    
+    from icalendar import Calendar, Event, vCalAddress, vText
 
+    cal = Calendar()
+
+    organizer = vCalAddress('MAILTO:cefn@cefn.com')
+    location = vText('Handovers from school or at Wetherspoons')
+    
+    for holidayName, start, end in holidaybounds(holidaymap):
+        start = parser.parse(start)
+        end = parser.parse(end)
+        
+        parents = parentSequence(holidayName, start, end)
+        sequenceDates = dateSequence(holidayName, start, end)
+        
+        for beginIndex in range(len(sequenceDates) - 1):
+            parent = parents[beginIndex % 2]    
+            beginDate, endDate = sequenceDates[beginIndex:beginIndex + 2]
+            
+            event = Event()
+            event.add('summary', 'Holiday with ' + parent)
+            event.add('dtstart', beginDate)
+            event.add('dtend', endDate)
+            #event.add('location', "The other side of the moon")
+            #event.add('organizer', organizer)
+            #event['uid'] = '20050115T101010/27346262376@mxm.dk'
+
+            cal.add_component(event)
+
+    return cal
 
 def holidaynights(holidaymap):
     for holidayName, start, end in holidaybounds(holidaymap):
@@ -147,5 +175,13 @@ def holidaynights(holidaymap):
 
 if __name__ == "__main__":
     import willow
-    for item in holidaynights(willow.holidaymap):
-        print(item)
+
+    with open("handovers.txt", 'w') as f:
+        for line in holidaynights(willow.holidaymap):
+            f.write(line + "\n")
+
+    cal = writeical(willow.holidaymap)
+    cal_content = cal.to_ical()
+    with open("handovers.ics", 'wb') as f:
+        f.write(cal_content)
+
