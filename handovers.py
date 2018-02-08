@@ -80,34 +80,43 @@ def generatecandidates(starttime, endtime):
 	return trimcandidates(midpoints(starttime, endtime))
 #	return midpoints(starttime, endtime)
 
-def formatcandidates(candidates, prefix="until"):
+def formatcandidates(candidates):
     if len(candidates) > 1:
-        return prefix + " either " + " or ".join([prettify(candidate.date()) for candidate in candidates])
+        return "either " + " or ".join([prettify(candidate.date()) for candidate in candidates])
     else:
-        return prefix + " " + prettify(candidates[0].date())
-        
+        return prettify(candidates[0].date())
+
+
 def holidaynights(holidaymap):
-    for name, start, end in holidaybounds(holidaymap):
+    for holidayName, start, end in holidaybounds(holidaymap):
         start = parser.parse(start)
         end = parser.parse(end)
-        nights = countnights(start, end)
-        prefix = name + ": ({} nights) ".format(nights)
-        if "Autumn" in name and "Holiday" in name and start.year % 2 != 0:
-            prefix += "Mum "
-        else:
-            prefix += "Dad "
-        prefix += "has first period starting " + prettify(start) + " "
-        suffix = ". Holiday ends " + prettify(end)
-        if not("Summer" in name and "Holiday" in name):
-            yield prefix + formatcandidates(generatecandidates(start, end)) + suffix
-        else:
+        totalNights = countnights(start, end)
+        startString = prettify(start)
+        endString = prettify(end)
+        mumFirst = (
+            ("Autumn" in holidayName and "Holiday" in holidayName and start.year % 2 != 0) or 
+            ("Summer" in holidayName and "Holiday" in holidayName)
+        )
+        firstParent = "Mum" if mumFirst else "Dad"
+        secondParent = "Dad" if mumFirst else "Mum"
+        pattern = "{holidayName}: ({totalNights} nights) {firstParent} has first period starting {startString} "
+        if "Summer" in holidayName and "Holiday" in holidayName:
             nextnoon = noon(start)
-            sequence = []
-            for offset in (14,14,7,7):
+            sequenceDates = []
+#            for offset in (14,14,7,7):
+            for offset in (7,7,14,14):
                 nextnoon += datetime.timedelta(offset)
-                sequence.append(prettify(nextnoon.date()))
-            sequence = ", ".join(sequence)
-            yield prefix + "with handovers " + sequence + " then half of remaining {} nights with Dad ".format(countnights(nextnoon, end)) + formatcandidates(generatecandidates(nextnoon, end), prefix="until final handover ") + suffix
+                sequenceDates.append(nextnoon.date())
+            sequenceSummary = ", ".join([prettify(date) for date in sequenceDates])
+            surplusNights = countnights(nextnoon, end)
+            finalHandover = formatcandidates(generatecandidates(nextnoon, end))
+            pattern += "with handovers {sequenceSummary} then half of remaining {surplusNights} nights with {secondParent} until handover {finalHandover}. "
+        else:
+            sequenceSummary = formatcandidates(generatecandidates(start, end))
+            pattern += "with handover {sequenceSummary}. "        
+        pattern += "Holiday ends {endString}"
+        yield pattern.format(**locals())
 
 
 if __name__ == "__main__":
