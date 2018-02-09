@@ -75,12 +75,24 @@ def formatcandidates(candidates):
     else:
         return prettify(candidates[0].date())
 
+# as legally recorded
+summerPeriods = (14,14,7,7)
+def parentSequence(holidayName, start, end):
+        if ("Autumn" in holidayName and "Holiday" in holidayName and start.year % 2 != 0) :
+            return "Mum", "Dad"
+        else:
+            return "Dad", "Mum"
+
+# as proposed by Cefn 2018-02-09 for Clare to share a birthday with Sky
+"""
+summerPeriods = (7,7,14,14)
 def parentSequence(holidayName, start, end):
         if  (   ("Autumn" in holidayName and "Holiday" in holidayName and start.year % 2 != 0) or 
                 ("Summer" in holidayName and "Holiday" in holidayName)  ):
             return "Mum", "Dad"
         else:
             return "Dad", "Mum"
+"""
 
 def dateSequence(holidayName, start, end):
     sequenceDates = []
@@ -90,10 +102,9 @@ def dateSequence(holidayName, start, end):
         sequenceDates.append(generatecandidates(start, end)[0])
     else: # handover splitting into week each, fortnight each, split remainder
         nextnoon = noon(start)
-        for offset in (14,14,7,7):
-        #for offset in (7,7,14,14): # week and fortnight handovers
+        for offset in summerPeriods:
             nextnoon += datetime.timedelta(offset)
-            sequenceDates.append(nextnoon.date())
+            sequenceDates.append(noon(nextnoon.date()))
         sequenceDates.append(generatecandidates(nextnoon, end)[0]) #handover splitting remaining time
     
     sequenceDates.append(end)
