@@ -34,17 +34,6 @@ def noon(moment):
 def prettify(date):
     return date.strftime("%a, %d %b %Y")
 
-'''
-        else:
-            nextnoon = startnoon
-            sequence = []
-            for offset in (14,14,7,7):
-                nextnoon += datetime.timedelta(offset)
-                sequence.append(nextnoon)            
-            yield prefix " handovers; " startnoon +     
-'''
-
-
 def countnights(starttime, endtime):
     startnoon = noon(starttime)
     endnoon = noon(endtime)
@@ -101,8 +90,8 @@ def dateSequence(holidayName, start, end):
         sequenceDates.append(generatecandidates(start, end)[0])
     else: # handover splitting into week each, fortnight each, split remainder
         nextnoon = noon(start)
-        # for offset in (14,14,7,7):
-        for offset in (7,7,14,14): # week and fortnight handovers
+        for offset in (14,14,7,7):
+        #for offset in (7,7,14,14): # week and fortnight handovers
             nextnoon += datetime.timedelta(offset)
             sequenceDates.append(nextnoon.date())
         sequenceDates.append(generatecandidates(nextnoon, end)[0]) #handover splitting remaining time
