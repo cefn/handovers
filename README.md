@@ -1,5 +1,7 @@
 # Handover Calculations
 
+Note: superceded by https://gitlab.com/cefn/residency/
+
 This set of python code outputs text indicating the proper handover day from a list of school holiday dates according to the policy of our co-parenting schedule.
 
 The handover routine I have for my daughter is for us to have half the week each in school termtime, and then half the school holidays each.
